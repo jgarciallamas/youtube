@@ -2,6 +2,7 @@ import dynamic from "next/dynamic";
 const ReactPlayer = dynamic(() => import("react-player/lazy"), { ssr: false });
 
 import Link from "next/link";
+import { useEffect } from "react";
 import prisma from "lib/prisma";
 import { getVideo, getVideos } from "lib/data.js";
 import timeago from "lib/timeago";
@@ -25,6 +26,21 @@ export async function getServerSideProps(context) {
 }
 
 export default function SingleVideo({ video, videos }) {
+  useEffect(() => {
+    const incrementViews = async () => {
+      await fetch("/api/view", {
+        body: JSON.stringify({
+          video: video.id,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      });
+    };
+    incrementViews();
+  }, [video.id]);
+
   if (!video) return <p className="text-center p-5">Video does not exist 😞</p>;
 
   return (
@@ -55,7 +71,7 @@ export default function SingleVideo({ video, videos }) {
                 <p className="text-2xl font-bold ">{video.title}</p>
 
                 <div className="text-gray-400">
-                  {video.views} views ·{" "}
+                  {video.views + 1} views ·{" "}
                   {timeago.format(new Date(video.createdAt))}
                 </div>
               </div>
